@@ -1,0 +1,24 @@
+---
+- name: Создание нового пользовтеля в операционной сиситеме Linux
+  hosts: avrora
+  vars:
+    user: petrov.dv
+    user_password: "pa$$w0rd21"
+    #group: sudo
+    curl: curl
+  tasks:
+    - name: Создание нового пользовтеля в операционной сиситеме Linux
+      user:      
+        name: "{{newuser}}"
+        user_password: "{{user_password}}"  
+        groups: wheel
+        append: yes 
+        create_home: true
+    - name: Получить информацию о пользователе
+      ansible.builtin.getent:
+        key: "{{ username }}"
+      register: user_info
+      ignore_errors: yes
+     - name: Отладка - показать информацию о пользователе
+      ansible.builtin.debug:
+        msg: "User info: {{ user_info }}
