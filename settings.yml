@@ -1,0 +1,20 @@
+---
+- name: Настройка сервера
+  hosts: avrora
+  vars:
+    tmux: tmux
+    mc: mc
+    curl: curl
+  tasks:
+    - name: Установка tmux
+      apt:
+        name: "{{tmux}}"
+        state: present
+    - name: Установка MC    
+      apt:
+        name: "{{mc}}"
+        state: present 
+    - name: Установка curl   
+      apt:
+        name: "{{curl}}"
+        state: present

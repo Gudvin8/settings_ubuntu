@@ -1,0 +1,55 @@
+---
+- name: Конфигурирование timezone и NTP для Ubuntu 22.04
+  hosts: all
+  become: yes
+  vars:
+    timezone: "Asia/Sakhalin"  # Замените на нужную временную зону
+    ntp_servers:
+      - "192.168.1.1"
+      - "0.ru.pool.ntp.org"
+      - "1.ru.pool.ntp.org"
+      - "2.ru.pool.ntp.org"
+      - "3.ru.pool.ntp.org"
+
+  tasks:
+    # Настройка временной зоны
+    - name: Настройка временной зоны
+      timezone:
+        name: "{{ timezone }}"
+
+    # Установка и настройка systemd-timesyncd
+    - name: Проверка статуса пакета - установлен пакет или нет
+      apt:
+        name: systemd-timesyncd
+        state: present
+        update_cache: yes
+
+    - name: Configure NTP servers in timesyncd
+      copy:
+        dest: /etc/systemd/timesyncd.conf
+        content: |
+          [Time]
+          NTP={{ ntp_servers | join(' ') }}
+          FallbackNTP=ntp.ubuntu.com
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Включить и стартовать timesyncd service
+      systemd:
+        name: systemd-timesyncd
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Включить автоматическую синхронизацию через NTP 
+      command: timedatectl set-ntp true
+
+    - name: Проверить синхронизацию времени
+      command: timedatectl status
+      register: time_status
+      changed_when: false
+
+    - name: Вывод проверки на экран
+      debug:
+        msg: "{{ time_status.stdout_lines }}"
