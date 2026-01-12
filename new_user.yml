@@ -2,7 +2,7 @@
 - name: Создание нового пользовтеля в операционной сиситеме Linux
   hosts: localhost
   vars:
-    newuser: petrov.dv
+    newuser: petrov_1.dv
     user_password: "pa$$w0rd21"
     group: sudo
     curl: curl
@@ -14,6 +14,16 @@
         groups: "{{group}}"
         append: yes 
         create_home: true
+    - name: Добавить алиас в .bashrc
+      lineinfile:
+        path: /home/{{ newuser }}/.bashrc
+        regexp: "^alias la="
+        line: "alias la='ls -la --color=auto'"
+        insertafter: EOF
+        state: present
+        create: yes
+        backup: yes
+      become: false    
     - name: Получить информацию о пользователе
       user:
         name: "{{ newuser }}"
@@ -22,3 +32,7 @@
     - name: Отладка - показать информацию о пользователе
       debug:
         msg: "User info: {{ user_info }}"
+    - name: Source .bashrc for current session (optional)
+      shell: source ~/.bashrc
+      args:
+        executable: /bin/bash

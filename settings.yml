@@ -1,6 +1,6 @@
 ---
 - name: Настройка сервера
-  hosts: avrora
+  hosts: localhost
   vars:
     tmux: tmux
     mc: mc
@@ -10,6 +10,7 @@
       apt:
         name: "{{tmux}}"
         state: present
+        update_cache: true
     - name: Установка MC    
       apt:
         name: "{{mc}}"
