@@ -1,19 +1,21 @@
 ---
-- name: Создание нового пользовтеля в операционной сиситеме Linux
+- name: Создание нового пользователя в операционной системе Linux
   hosts: localhost
   vars:
-    newuser: petrov_1.dv
-    user_password: "pa$$w0rd21"
+    newuser: petrov.dv
+    user_password: "password3z"
     group: sudo
     curl: curl
   tasks:
-    - name: Создание нового пользовтеля в операционной сиситеме Linux
+    - name: Создание нового пользователя в операционной системе Linux
       user:      
         name: "{{newuser}}"
-        password: "{{user_password}}"  
+        password: "{{ user_password | password_hash('sha512') }}"
         groups: "{{group}}"
         append: yes 
         create_home: true
+        shell: /bin/bash 
+    
     - name: Добавить алиас в .bashrc
       lineinfile:
         path: /home/{{ newuser }}/.bashrc
@@ -23,16 +25,14 @@
         state: present
         create: yes
         backup: yes
-      become: false    
+      become_user: "{{ newuser }}"
+    
     - name: Получить информацию о пользователе
       user:
         name: "{{ newuser }}"
       register: user_info
-      ignore_errors: yes
+      #ignore_errors: yes
+    
     - name: Отладка - показать информацию о пользователе
       debug:
         msg: "User info: {{ user_info }}"
-    - name: Source .bashrc for current session (optional)
-      shell: source ~/.bashrc
-      args:
-        executable: /bin/bash
