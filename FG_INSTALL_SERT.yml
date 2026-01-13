@@ -1,0 +1,23 @@
+---
+- name: Установка CA-сертификата из того же каталога, что и playbook
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Копировать CA-сертификат в системное хранилище
+      copy:
+        src: FG100FTK20015512.crt # ← берётся из той же папки, что и playbook
+        #dest: /usr/local/share/ca-certificates/domik65.crt
+        dest: /usr/local/share/ca-certificates/FG100FTK20015512.crt
+        owner: root
+        group: root
+        mode: '0644'
+        backup: yes
+
+    - name: Обновить системное хранилище сертификатов
+      command: update-ca-certificates
+      register: ca_update_result
+      changed_when: "'added' in ca_update_result.stdout or 'removed' in ca_update_result.stdout"
+
+    - name: Вывести результат обновления (опционально)
+      debug:
+        msg: "{{ ca_update_result.stdout_lines }}"

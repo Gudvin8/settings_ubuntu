@@ -1,0 +1,105 @@
+#Первоначальные настройки операционной системы
+- name: Configure system timezone, hostname and proxy
+  hosts: all
+  become: yes
+  vars:
+    # Настройки timezone
+    timezone: "Asia/Sakhalin"
+    
+    # Новый hostname
+    new_hostname: "SRV13"
+    
+    # Настройки прокси
+    proxy_enabled: true
+    http_proxy: "http://192.168.100.2:3128"
+    https_proxy: "http://192.168.100.2:3128"
+    ftp_proxy: "http://192.168.100.2:3128"
+    no_proxy: "localhost,127.0.0.1,10.*,192.168.*::1"
+    
+    # Пакеты для установки
+    packages:
+      - chrony
+      - curl
+      - wget
+      - tmux
+
+  tasks:
+    # Установка необходимых пакетов
+    - name: Install required packages
+      apt:
+        name: "{{ packages }}"
+        state: present
+        update_cache: yes
+
+    # Настройка временной зоны
+    - name: Configure timezone
+      timezone:
+        name: "{{ timezone }}"
+
+    # Настройка hostname
+    - name: Set hostname
+      hostname:
+        name: "{{ new_hostname }}"
+
+    # Настройка NTP/Chrony
+    - name: Configure NTP time synchronization
+      service:
+        name: chrony
+        state: started
+        enabled: yes
+
+    # Настройка прокси для apt
+    - name: Configure APT proxy
+      blockinfile:
+        path: /etc/apt/apt.conf.d/95proxies
+        create: yes
+        block: |
+          Acquire::http::proxy "{{ http_proxy }}";
+          Acquire::https::proxy "{{ https_proxy }}";
+          Acquire::ftp::proxy "{{ ftp_proxy }}";
+      when: proxy_enabled
+
+    # Настройка системного прокси
+    - name: Configure system-wide proxy
+      blockinfile:
+        path: /etc/environment
+        marker: "# {mark} ANSIBLE MANAGED PROXY SETTINGS"
+        block: |
+          http_proxy="{{ http_proxy }}"
+          https_proxy="{{ https_proxy }}"
+          ftp_proxy="{{ ftp_proxy }}"
+          no_proxy="{{ no_proxy }}"
+          HTTP_PROXY="{{ http_proxy }}"
+          HTTPS_PROXY="{{ https_proxy }}"
+          FTP_PROXY="{{ ftp_proxy }}"
+          NO_PROXY="{{ no_proxy }}"
+      when: proxy_enabled
+
+    # Настройка прокси для wget
+    - name: Configure wget proxy
+      blockinfile:
+        path: /etc/wgetrc
+        marker: "# {mark} ANSIBLE MANAGED PROXY SETTINGS"
+        block: |
+          http_proxy = {{ http_proxy }}
+          https_proxy = {{ https_proxy }}
+          ftp_proxy = {{ ftp_proxy }}
+          use_proxy = on
+      when: proxy_enabled
+
+    # Перезагрузка системы для применения hostname (опционально)
+#    - name: Reboot system to apply hostname
+#      reboot:
+#        msg: "Rebooting to apply new hostname 5 min"
+#        connect_timeout: 5
+#        reboot_timeout: 300
+#        pre_reboot_delay: 0
+#        post_reboot_delay: 30
+#        test_command: uptime
+#      ignore_errors: yes
+
+  handlers:
+    - name: restart chrony
+      service:
+        name: chrony
+        state: restarted

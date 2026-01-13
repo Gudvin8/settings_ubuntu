@@ -4,7 +4,10 @@
   vars:
     newuser: petrov.dv
     user_password: "password3z"
-    group: sudo
+    group:
+      - sudo
+      - oit
+      - kvm
     curl: curl
   tasks:
     - name: Создание нового пользователя в операционной системе Linux

@@ -16,4 +16,4 @@ userdel:
 После выполнения команды рекомендуется проверить, что пользователь был удалён, — для этого можно проверить список
 пользователей с помощью команды cat /etc/passwd.
 
-deluser petrov_1.dv --remove-all-files
+deluser petrov.dv --remove-all-files
